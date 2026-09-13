@@ -34,18 +34,25 @@ npm run lint     # oxlint
 src/
   components/        Navbar, Footer, shared UI (Logo, Container)
   components/sections/  Landing page sections (Hero, About, Services, ...)
-  pages/             Route-level pages (Home, BookCounseling, Events)
-  data/              Placeholder content (events) — swap for Supabase reads
+  pages/             Route-level pages (Home, BookCounseling, Events, Admin)
+  data/              Placeholder content (events fallback)
   lib/supabaseClient.ts  Supabase client, no-ops until env vars are set
+  lib/auth.ts            Admin session hook (Supabase Auth)
+  lib/events.ts          Public event reads + date formatting
+  lib/adminEvents.ts     Admin CRUD for events
+  lib/booking.ts         Public booking flow (slots, hold, confirm)
+  lib/adminBookings.ts   Admin booking confirmation/cancellation
+
+supabase/
+  schema.sql, 00N_*.sql  Migrations, run in order in the SQL Editor
+  functions/             Edge Functions (Deno), deployed via Supabase CLI
 ```
 
 ## Roadmap / feature flags already scaffolded
 
 - **Landing page & company profile** — done (this repo).
-- **Book Counseling** (`/book-counseling`) — currently a "coming soon"
-  lead-capture form. Once ready, point it at a `counseling_requests`
-  table in Supabase (the insert call is already written in
-  `src/pages/BookCounseling.tsx`, it just needs the env vars below).
+- **Book Counseling** (`/book-counseling`) — done, see
+  [Booking counseling system](#booking-counseling-system) below.
 - **Event announcements** (`/events`, plus a preview on the homepage)
   — currently reads static data from `src/data/events.ts`. Swap that
   for a Supabase query against an `events` table so admins can manage
@@ -99,6 +106,76 @@ delete events without touching Supabase directly.
 
 There's intentionally no link to `/admin` in the site's nav — admins
 just go there directly.
+
+## Booking counseling system
+
+`/book-counseling` lets a customer pick a counselor, a date (**H+1
+only** — today or same-day booking is blocked, enforced in the
+database, not just the UI), and a time slot from a fixed daily
+template (`DAILY_SLOT_TIMES` in `src/lib/booking.ts`). Picking a slot
+**holds it for 90 seconds** (`HOLD_SECONDS`) while a static QRIS image
+is shown; nobody else can grab that slot until the hold expires. This
+is all enforced by the three Postgres functions in
+`supabase/004_booking_system.sql` (`request_booking_hold`,
+`mark_awaiting_payment_confirmation`, `list_taken_slots`), which use
+`pg_advisory_xact_lock` so two people can't win the same slot in a
+race. No cron job is needed — an expired hold is cleaned up lazily,
+the next time anyone tries to book that exact slot again.
+
+**No payment gateway is wired in.** Getting real, API-driven QRIS
+requires a licensed payment aggregator (Xendit, Midtrans, etc.), which
+needs business verification — a blocker for now. Instead:
+
+1. Customer scans a **static QRIS image** you provide (from a bank's
+   merchant app like BRI Merchant/Merchant BCA, or GoBiz/DANA Bisnis)
+   and transfers manually.
+2. Customer clicks "Saya Sudah Bayar" → booking status becomes
+   `awaiting_confirmation` (slot stays reserved).
+3. An admin checks the actual transfer landed, then clicks **"Konfirmasi
+   Pembayaran"** on `/admin` — this calls the
+   `confirm-booking-payment` Edge Function, which creates the Zoom
+   meeting and emails the join link, fully automatically.
+
+This can be swapped for a real payment webhook later without changing
+the booking/hold logic — only step 2-3 would become automatic.
+
+### Setup
+
+1. Run `supabase/004_booking_system.sql` in the SQL Editor — creates
+   `counselors` (seeded with 3 example counselors — edit via Table
+   Editor) and `bookings`, plus the three functions above.
+2. Add `public/qris.png` — your static QRIS image (from whichever bank
+   or e-wallet merchant account you register). The booking page
+   references it directly; if the file is missing it just hides the
+   broken image rather than crashing.
+3. Deploy the Edge Function (needs the
+   [Supabase CLI](https://supabase.com/docs/guides/cli)):
+   ```bash
+   supabase link --project-ref botuofmfczbeyolcoeuc
+   supabase functions deploy confirm-booking-payment
+   ```
+   Leave JWT verification **on** (the default) — that's what restricts
+   this function to logged-in admins.
+4. Set the function's secrets (never committed to git):
+   ```bash
+   supabase secrets set \
+     ZOOM_ACCOUNT_ID=... \
+     ZOOM_CLIENT_ID=... \
+     ZOOM_CLIENT_SECRET=... \
+     ZOOM_HOST_EMAIL=you@example.com \
+     RESEND_API_KEY=... \
+     RESEND_FROM_EMAIL="GPH <noreply@yourdomain.com>"
+   ```
+   - Zoom credentials come from a **Server-to-Server OAuth** app in the
+     [Zoom Marketplace](https://marketplace.zoom.us/) with the
+     `meeting:write:meeting:admin` scope. `ZOOM_HOST_EMAIL` is the
+     email of the licensed Zoom user (on that same account) who will
+     host the generated meetings.
+   - [Resend](https://resend.com) sends the confirmation email;
+     `RESEND_FROM_EMAIL` needs a domain verified in their dashboard.
+   - **If any of these credentials were ever shared somewhere
+     unsecured (a screenshot, a chat, etc.), regenerate them before
+     going live** — treat a shared secret as compromised.
 
 ## Brand reference
 

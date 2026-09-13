@@ -11,6 +11,12 @@ import {
   type EventRecord,
   type EventInput,
 } from "../lib/adminEvents";
+import {
+  listAwaitingConfirmation,
+  cancelBooking,
+  confirmBookingPayment,
+  type PendingBooking,
+} from "../lib/adminBookings";
 
 const emptyForm: EventInput = {
   title: "",
@@ -42,7 +48,139 @@ export function Admin() {
     );
   }
 
-  return session ? <EventManager /> : <LoginForm />;
+  return session ? <Dashboard /> : <LoginForm />;
+}
+
+function Dashboard() {
+  return (
+    <Container className="max-w-4xl py-16">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl font-extrabold text-ink">
+          Admin GPH
+        </h1>
+        <button
+          onClick={() => supabase!.auth.signOut()}
+          className="text-sm font-semibold text-ink/60 hover:text-ink"
+        >
+          Keluar
+        </button>
+      </div>
+
+      <div className="mt-10">
+        <BookingManager />
+      </div>
+
+      <div className="mt-16">
+        <EventManager />
+      </div>
+    </Container>
+  );
+}
+
+function BookingManager() {
+  const [bookings, setBookings] = useState<PendingBooking[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+
+  async function refresh() {
+    setLoadingList(true);
+    try {
+      setBookings(await listAwaitingConfirmation());
+    } finally {
+      setLoadingList(false);
+    }
+  }
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  async function handleConfirm(id: string) {
+    setBusyId(id);
+    setStatus(null);
+    try {
+      await confirmBookingPayment(id);
+      setStatus("Pembayaran dikonfirmasi, Zoom + email terkirim.");
+      await refresh();
+    } catch (err) {
+      setStatus(
+        err instanceof Error
+          ? `Gagal konfirmasi: ${err.message}`
+          : "Gagal konfirmasi pembayaran.",
+      );
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleCancel(id: string) {
+    if (!confirm("Batalkan booking ini?")) return;
+    setBusyId(id);
+    try {
+      await cancelBooking(id);
+      await refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div>
+      <h2 className="font-display text-xl font-bold text-ink">
+        Booking Menunggu Konfirmasi
+      </h2>
+      <p className="mt-1 text-sm text-ink/60">
+        Cek mutasi transfer QRIS secara manual, lalu konfirmasi di sini —
+        Zoom meeting dan email ke customer dikirim otomatis.
+      </p>
+
+      {status && <p className="mt-3 text-sm text-ink/70">{status}</p>}
+
+      <div className="mt-6 space-y-4">
+        {loadingList ? (
+          <p className="text-sm text-ink/50">Memuat...</p>
+        ) : bookings.length === 0 ? (
+          <p className="text-sm text-ink/50">
+            Tidak ada booking yang menunggu konfirmasi.
+          </p>
+        ) : (
+          bookings.map((booking) => (
+            <div
+              key={booking.id}
+              className="flex flex-col gap-3 rounded-2xl bg-peach/20 p-5 ring-1 ring-black/5 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <p className="font-semibold text-ink">
+                  {formatEventDateTime(booking.slot_datetime)} ·{" "}
+                  {booking.counselor_name}
+                </p>
+                <p className="text-sm text-ink/60">
+                  {booking.user_name} — {booking.user_email}
+                </p>
+              </div>
+              <div className="flex shrink-0 gap-3 text-sm font-semibold">
+                <button
+                  onClick={() => handleConfirm(booking.id)}
+                  disabled={busyId === booking.id}
+                  className="rounded-full bg-blue px-4 py-2 text-white hover:bg-blue-dark disabled:opacity-50"
+                >
+                  {busyId === booking.id ? "Memproses..." : "Konfirmasi Pembayaran"}
+                </button>
+                <button
+                  onClick={() => handleCancel(booking.id)}
+                  disabled={busyId === booking.id}
+                  className="rounded-full border border-ink/20 px-4 py-2 text-ink/70 hover:border-red-400 hover:text-red-600"
+                >
+                  Batalkan
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
 }
 
 function LoginForm() {
@@ -173,26 +311,18 @@ function EventManager() {
   }
 
   return (
-    <Container className="max-w-4xl py-16">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-extrabold text-ink">
-          Kelola Event GPH
-        </h1>
-        <button
-          onClick={() => supabase!.auth.signOut()}
-          className="text-sm font-semibold text-ink/60 hover:text-ink"
-        >
-          Keluar
-        </button>
-      </div>
+    <div>
+      <h2 className="font-display text-xl font-bold text-ink">
+        Kelola Event GPH
+      </h2>
 
       <form
         onSubmit={handleSubmit}
-        className="mt-8 space-y-4 rounded-3xl bg-peach/20 p-6"
+        className="mt-6 space-y-4 rounded-3xl bg-peach/20 p-6"
       >
-        <h2 className="font-semibold text-ink">
+        <h3 className="font-semibold text-ink">
           {editingId ? "Edit Event" : "Tambah Event Baru"}
-        </h2>
+        </h3>
         <input
           type="text"
           placeholder="Judul"
@@ -295,6 +425,6 @@ function EventManager() {
           ))
         )}
       </div>
-    </Container>
+    </div>
   );
 }
