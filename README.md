@@ -80,6 +80,23 @@ the `events` table from the Supabase dashboard's Table Editor — no
 code changes or redeploy needed. Counseling submissions land in
 `counseling_requests` and are visible from the same dashboard.
 
+### Admin page (`/admin`)
+
+A lighter-weight alternative to the Table Editor: `/admin` is a
+login-gated page (Supabase Auth) where the GPH team can add, edit, and
+delete events without touching Supabase directly.
+
+1. Run `supabase/002_admin_write_policies.sql` once in the SQL Editor
+   — it adds the insert/update/delete policies the admin page needs
+   (only `schema.sql`'s public *read* policy existed before).
+2. Create admin accounts under **Authentication → Users → Add user**.
+   Check **"Auto Confirm User"** so they can log in immediately. There
+   is no public sign-up — accounts are only created this way.
+3. Log in at `/admin` with that email/password.
+
+There's intentionally no link to `/admin` in the site's nav — admins
+just go there directly.
+
 ## Brand reference
 
 - Colors: cream `#F7F2ED`, peach `#E8BFAF`, blue `#70b2cf` (defined as
@@ -110,10 +127,13 @@ One-time setup:
      `<your-github-username>.github.io` for a subdomain).
    - Re-enter the domain under **Settings → Pages → Custom domain** in
      GitHub so it issues an HTTPS certificate for it.
-3. `vite.config.ts` uses `base: '/'`, which is correct for a custom
-   domain (served from the root). If you ever deploy to the default
-   `https://<user>.github.io/<repo>/` URL instead (no custom domain),
-   change `base` to `'/<repo>/'`.
+3. `vite.config.ts`'s `base` (and `main.tsx`'s router `basename`,
+   which just reads `import.meta.env.BASE_URL`) is currently set to
+   `'/gph-website/'` so the site previews correctly at the default
+   `https://gphtechnology.github.io/gph-website/` URL. Once the
+   Hostinger custom domain is connected, change `base` back to `'/'`
+   (a custom domain serves from the root) and set `pathSegmentsToKeep`
+   back to `0` in `public/404.html`.
 
 Client-side routing (`/book-counseling`, `/events`) works on GitHub
 Pages via the standard SPA fallback trick — see `public/404.html` and

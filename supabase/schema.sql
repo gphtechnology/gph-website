@@ -27,10 +27,26 @@ create policy "Anyone can read events"
   on public.events for select
   using (true);
 
--- Writing events (creating/editing announcements) is left to
--- authenticated admins via the Supabase dashboard or Table Editor for
--- now — add an "authenticated write" policy here once an admin login
--- flow exists in the app.
+-- Only signed-in admins (via the /admin page, or the Supabase
+-- dashboard) can create, edit, or delete events. Create admin
+-- accounts under Authentication → Users → Add user (check "Auto
+-- Confirm User") — there's no public sign-up.
+
+create policy "Authenticated users can insert events"
+  on public.events for insert
+  to authenticated
+  with check (true);
+
+create policy "Authenticated users can update events"
+  on public.events for update
+  to authenticated
+  using (true)
+  with check (true);
+
+create policy "Authenticated users can delete events"
+  on public.events for delete
+  to authenticated
+  using (true);
 
 -- Counseling requests ------------------------------------------------
 
