@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 import type { Booking } from "./booking";
 
@@ -32,6 +33,14 @@ export async function confirmBookingPayment(id: string) {
     "confirm-booking-payment",
     { body: { booking_id: id } },
   );
-  if (error) throw error;
+  if (error) {
+    // FunctionsHttpError's .message is just "non-2xx status code" — the
+    // function's actual { error: "..." } body is on .context (a Response).
+    if (error instanceof FunctionsHttpError) {
+      const body = await error.context.json().catch(() => null);
+      throw new Error(body?.error ?? error.message);
+    }
+    throw error;
+  }
   return data;
 }
