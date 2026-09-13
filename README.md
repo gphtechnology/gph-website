@@ -144,8 +144,8 @@ the booking/hold logic — only step 2-3 would become automatic.
 1. Run `supabase/004_booking_system.sql` in the SQL Editor — creates
    `counselors` (seeded with 3 example counselors — edit via Table
    Editor) and `bookings`, plus the three functions above.
-2. Add `public/qris.png` — your static QRIS image (from whichever bank
-   or e-wallet merchant account you register). The booking page
+2. Add `public/qris.jpeg` — your static QRIS image (from whichever
+   bank or e-wallet merchant account you register). The booking page
    references it directly; if the file is missing it just hides the
    broken image rather than crashing.
 3. Deploy the Edge Function (needs the

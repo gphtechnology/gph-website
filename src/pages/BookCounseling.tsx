@@ -259,7 +259,7 @@ export function BookCounseling() {
             </p>
 
             <img
-              src="/qris.png"
+              src="/qris.jpeg"
               alt="QRIS GPH"
               className="mx-auto mt-6 w-56 rounded-2xl bg-white p-3"
               onError={(e) => {
