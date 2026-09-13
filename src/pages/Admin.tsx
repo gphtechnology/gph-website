@@ -100,8 +100,13 @@ function BookingManager() {
     setBusyId(id);
     setStatus(null);
     try {
-      await confirmBookingPayment(id);
-      setStatus("Pembayaran dikonfirmasi, Zoom + email terkirim.");
+      const result = await confirmBookingPayment(id);
+      setStatus(
+        result.email_sent
+          ? "Pembayaran dikonfirmasi, Zoom + email terkirim."
+          : `Zoom meeting dibuat, tapi email gagal terkirim (${result.email_error}). ` +
+            `Kirim link ini manual ke customer: ${result.join_url}`,
+      );
       await refresh();
     } catch (err) {
       setStatus(

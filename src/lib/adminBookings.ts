@@ -27,7 +27,16 @@ export async function cancelBooking(id: string) {
   if (error) throw error;
 }
 
-export async function confirmBookingPayment(id: string) {
+export type ConfirmPaymentResult = {
+  ok: true;
+  join_url: string;
+  email_sent: boolean;
+  email_error: string | null;
+};
+
+export async function confirmBookingPayment(
+  id: string,
+): Promise<ConfirmPaymentResult> {
   if (!supabase) throw new Error("Supabase belum dikonfigurasi");
   const { data, error } = await supabase.functions.invoke(
     "confirm-booking-payment",
@@ -42,5 +51,5 @@ export async function confirmBookingPayment(id: string) {
     }
     throw error;
   }
-  return data;
+  return data as ConfirmPaymentResult;
 }

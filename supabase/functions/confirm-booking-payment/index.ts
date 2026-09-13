@@ -72,9 +72,23 @@ Deno.serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    await sendConfirmationEmail(booking, zoomMeeting.join_url);
+    // Zoom meeting + "paid" status are the parts that matter; don't let
+    // an email hiccup (e.g. Resend sandbox mode, domain not verified
+    // yet) make this look like a total failure when it mostly worked.
+    let emailError: string | null = null;
+    try {
+      await sendConfirmationEmail(booking, zoomMeeting.join_url);
+    } catch (err) {
+      emailError = err instanceof Error ? err.message : "Unknown email error";
+      console.error("Email send failed (booking still marked paid):", emailError);
+    }
 
-    return json({ ok: true, join_url: zoomMeeting.join_url });
+    return json({
+      ok: true,
+      join_url: zoomMeeting.join_url,
+      email_sent: emailError === null,
+      email_error: emailError,
+    });
   } catch (err) {
     console.error(err);
     return json(
