@@ -14,7 +14,10 @@ create table if not exists public.events (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text not null,
-  event_date date not null,
+  -- No timezone: GPH events are always WIB, stored as the wall-clock
+  -- date+time typed into the admin form (see 003_add_event_time.sql
+  -- for the migration on a database that already ran this file).
+  event_date timestamp not null,
   location text not null,
   registration_url text,
   image_url text,

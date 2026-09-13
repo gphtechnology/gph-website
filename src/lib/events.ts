@@ -12,6 +12,23 @@ type EventRow = {
   image_url: string | null;
 };
 
+const eventDateFormatter = new Intl.DateTimeFormat("id-ID", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+/**
+ * `date` is a naive WIB wall-clock string (no timezone offset), so
+ * `new Date(...)` parses it as local time and this always prints the
+ * same numbers regardless of the viewer's own timezone.
+ */
+export function formatEventDateTime(date: string): string {
+  return `${eventDateFormatter.format(new Date(date))} WIB`;
+}
+
 function mapRow(row: EventRow): GphEvent {
   return {
     id: row.id,

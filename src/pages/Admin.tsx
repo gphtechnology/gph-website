@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Container } from "../components/Container";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import { useSession } from "../lib/auth";
+import { formatEventDateTime } from "../lib/events";
 import {
   listEventRecords,
   createEventRecord,
@@ -130,7 +131,9 @@ function EventManager() {
     setForm({
       title: event.title,
       description: event.description,
-      event_date: event.event_date,
+      // Supabase returns "YYYY-MM-DDTHH:mm:ss"; <input type="datetime-local">
+      // needs it trimmed to the minute.
+      event_date: event.event_date.slice(0, 16),
       location: event.location,
       registration_url: event.registration_url ?? "",
     });
@@ -207,13 +210,18 @@ function EventManager() {
           className="w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 outline-none focus:border-blue"
         />
         <div className="grid gap-4 sm:grid-cols-2">
-          <input
-            type="date"
-            required
-            value={form.event_date}
-            onChange={(e) => setForm({ ...form, event_date: e.target.value })}
-            className="w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 outline-none focus:border-blue"
-          />
+          <div>
+            <input
+              type="datetime-local"
+              required
+              value={form.event_date}
+              onChange={(e) =>
+                setForm({ ...form, event_date: e.target.value })
+              }
+              className="w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 outline-none focus:border-blue"
+            />
+            <p className="mt-1 text-xs text-ink/50">Jam dalam WIB</p>
+          </div>
           <input
             type="text"
             placeholder="Lokasi"
@@ -266,7 +274,7 @@ function EventManager() {
               <div>
                 <p className="font-semibold text-ink">{event.title}</p>
                 <p className="text-sm text-ink/60">
-                  {event.event_date} · {event.location}
+                  {formatEventDateTime(event.event_date)} · {event.location}
                 </p>
               </div>
               <div className="flex shrink-0 gap-3 text-sm font-semibold">

@@ -89,10 +89,13 @@ delete events without touching Supabase directly.
 1. Run `supabase/002_admin_write_policies.sql` once in the SQL Editor
    — it adds the insert/update/delete policies the admin page needs
    (only `schema.sql`'s public *read* policy existed before).
-2. Create admin accounts under **Authentication → Users → Add user**.
+2. Run `supabase/003_add_event_time.sql` — changes `event_date` from
+   date-only to date+time (naive, always WIB — see the file's
+   comment) so events can show a start time, not just a day.
+3. Create admin accounts under **Authentication → Users → Add user**.
    Check **"Auto Confirm User"** so they can log in immediately. There
    is no public sign-up — accounts are only created this way.
-3. Log in at `/admin` with that email/password.
+4. Log in at `/admin` with that email/password.
 
 There's intentionally no link to `/admin` in the site's nav — admins
 just go there directly.

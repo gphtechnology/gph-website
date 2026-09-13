@@ -1,12 +1,6 @@
 import { HiOutlineMapPin, HiOutlineCalendar } from "react-icons/hi2";
 import { Container } from "../components/Container";
-import { useEvents } from "../lib/events";
-
-const dateFormatter = new Intl.DateTimeFormat("id-ID", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
+import { useEvents, formatEventDateTime } from "../lib/events";
 
 export function Events() {
   const { events, loading } = useEvents();
@@ -43,7 +37,7 @@ export function Events() {
                 <div className="mt-5 flex flex-wrap gap-4 text-sm font-medium text-ink/60">
                   <span className="flex items-center gap-1.5">
                     <HiOutlineCalendar className="text-blue-dark" />
-                    {dateFormatter.format(new Date(event.date))}
+                    {formatEventDateTime(event.date)}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <HiOutlineMapPin className="text-blue-dark" />
