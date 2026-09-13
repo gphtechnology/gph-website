@@ -53,18 +53,32 @@ src/
 
 ## Connecting Supabase
 
-1. Copy `.env.example` to `.env.local` and fill in your project's URL
-   and anon key:
+Project: https://supabase.com/dashboard/project/botuofmfczbeyolcoeuc
+
+1. Run `supabase/schema.sql` once in that project's **SQL Editor** — it
+   creates the `events` table (public read, for announcements) and the
+   `counseling_requests` table (public insert only, for the booking
+   lead form), both with row-level security enabled.
+2. Copy `.env.example` to `.env.local` and fill in:
    ```
-   VITE_SUPABASE_URL=...
-   VITE_SUPABASE_ANON_KEY=...
+   VITE_SUPABASE_URL=https://botuofmfczbeyolcoeuc.supabase.co
+   VITE_SUPABASE_ANON_KEY=...   # Settings → API → Project API keys → anon/public
    ```
-2. `.env.local` is gitignored — for production builds via GitHub
+   Never use the `service_role` key here — the anon key is the only
+   one meant to ship in frontend code.
+3. `.env.local` is gitignored — for production builds via GitHub
    Actions, add the same two values as repository secrets
    (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`); the deploy workflow
    already passes them through.
-3. The site works fine as a static landing page with these unset —
-   `isSupabaseConfigured` guards every place that touches the client.
+4. The site works fine as a static landing page with these unset —
+   `isSupabaseConfigured` guards every place that touches the client,
+   and `src/lib/events.ts` falls back to the placeholder list in
+   `src/data/events.ts` until the `events` table has rows.
+
+Once connected, managing event announcements is just adding rows to
+the `events` table from the Supabase dashboard's Table Editor — no
+code changes or redeploy needed. Counseling submissions land in
+`counseling_requests` and are visible from the same dashboard.
 
 ## Brand reference
 

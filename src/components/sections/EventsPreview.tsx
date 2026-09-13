@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { HiOutlineMapPin, HiOutlineCalendar } from "react-icons/hi2";
 import { Container } from "../Container";
-import { placeholderEvents } from "../../data/events";
+import { useEvents } from "../../lib/events";
 
 const dateFormatter = new Intl.DateTimeFormat("id-ID", {
   day: "numeric",
@@ -11,6 +11,9 @@ const dateFormatter = new Intl.DateTimeFormat("id-ID", {
 });
 
 export function EventsPreview() {
+  const { events } = useEvents();
+  const upcoming = events.slice(0, 2);
+
   return (
     <section id="events" className="bg-peach/20 py-24">
       <Container>
@@ -32,7 +35,7 @@ export function EventsPreview() {
         </div>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2">
-          {placeholderEvents.map((event, index) => (
+          {upcoming.map((event, index) => (
             <motion.article
               key={event.id}
               initial={{ opacity: 0, y: 24 }}
