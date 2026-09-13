@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="32" fill="#F7F2ED" />
+  <text
+    x="32"
+    y="40"
+    text-anchor="middle"
+    font-family="'Plus Jakarta Sans', 'DM Sans', sans-serif"
+    font-weight="800"
+    font-size="24"
+  >
+    <tspan fill="#70b2cf">G</tspan><tspan fill="#24303a">PH</tspan>
+  </text>
+</svg>

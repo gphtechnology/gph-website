@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Gigajo Psychological House</title>
+    <!--
+      GitHub Pages has no server-side rewrites, so a direct visit to a
+      route like /events 404s. This is the standard SPA fallback trick
+      (https://github.com/rafgraph/spa-github-pages): redirect the 404
+      back to index.html with the intended path encoded in the query
+      string, then index.html restores it via history.replaceState.
+      pathSegmentsToKeep is 0 because this site is served from the
+      domain root (custom domain), not a /<repo-name>/ subpath.
+    -->
+    <script type="text/javascript">
+      var pathSegmentsToKeep = 0;
+      var l = window.location;
+      l.replace(
+        l.protocol +
+          "//" +
+          l.hostname +
+          (l.port ? ":" + l.port : "") +
+          l.pathname
+            .split("/")
+            .slice(0, 1 + pathSegmentsToKeep)
+            .join("/") +
+          "/?/" +
+          l.pathname
+            .slice(1)
+            .split("/")
+            .slice(pathSegmentsToKeep)
+            .join("/")
+            .replace(/&/g, "~and~") +
+          (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
+          l.hash,
+      );
+    </script>
+  </head>
+  <body></body>
+</html>

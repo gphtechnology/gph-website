@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/*
+ * Brand tokens pulled from the GPH Instagram / brand-sheet reference:
+ *   cream #F7F2ED, peach #E8BFAF, blue #70b2cf
+ * Logo font is Codec Pro (licensed, not bundled here) — drop the
+ * woff2 files into src/assets/fonts and uncomment the @font-face
+ * below to switch it on. Until then, headings fall back to
+ * Plus Jakarta Sans, a free geometric sans with a similar feel.
+ */
+@theme {
+  --font-display: "Codec Pro", "Plus Jakarta Sans", "DM Sans", sans-serif;
+  --font-body: "DM Sans", "Plus Jakarta Sans", sans-serif;
+
+  --color-cream: #f7f2ed;
+  --color-peach: #e8bfaf;
+  --color-peach-dark: #dba690;
+  --color-blue: #70b2cf;
+  --color-blue-dark: #4f93b3;
+  --color-ink: #24303a;
+}
+
+/* Uncomment once the licensed Codec Pro files are added:
+@font-face {
+  font-family: "Codec Pro";
+  src: url("/assets/fonts/CodecPro-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+*/
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+::selection {
+  background-color: var(--color-peach);
+  color: var(--color-ink);
+}
