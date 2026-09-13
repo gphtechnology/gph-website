@@ -1,13 +1,10 @@
 import { motion } from "framer-motion";
 import { Container } from "../Container";
-
-const stats = [
-  { label: "Peer Counselor & Psikolog", value: "10+" },
-  { label: "Sesi Konseling Terselenggara", value: "500+" },
-  { label: "Event & Workshop", value: "20+" },
-];
+import { useLanguage } from "../../lib/i18n/context";
 
 export function About() {
+  const { t } = useLanguage();
+
   return (
     <section id="about" className="py-24">
       <Container className="grid gap-14 lg:grid-cols-2 lg:items-center">
@@ -18,22 +15,16 @@ export function About() {
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
           <span className="text-sm font-semibold tracking-wide text-blue uppercase">
-            Tentang Kami
+            {t.about.eyebrow}
           </span>
           <h2 className="mt-3 font-display text-3xl font-extrabold text-ink sm:text-4xl">
-            Gigajo Psychological House
+            {t.about.title}
           </h2>
           <p className="mt-6 leading-relaxed text-ink/70">
-            GPH lahir dari Gigajo dengan satu misi: membuat dukungan
-            kesehatan mental terasa lebih dekat, hangat, dan mudah diakses —
-            khususnya untuk anak muda. Lewat private counseling, peer
-            counselor, dan rangkaian workshop maupun booth komunitas, kami
-            percaya bahwa setiap cerita layak didengar tanpa dihakimi.
+            {t.about.paragraph1}
           </p>
           <p className="mt-4 leading-relaxed text-ink/70">
-            Sebagai trademark dari Gigajo, GPH berkomitmen menghadirkan
-            layanan psikologis yang elegan, personal, dan berbasis empati —
-            baik secara online maupun lewat kegiatan offline di komunitas.
+            {t.about.paragraph2}
           </p>
         </motion.div>
 
@@ -44,7 +35,7 @@ export function About() {
           transition={{ duration: 0.6, ease: "easeOut", delay: 0.15 }}
           className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-1"
         >
-          {stats.map((stat) => (
+          {t.about.stats.map((stat) => (
             <div
               key={stat.label}
               className="rounded-3xl bg-peach/40 p-6 text-center lg:text-left"

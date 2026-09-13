@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import { HiOutlineMapPin, HiOutlineCalendar } from "react-icons/hi2";
 import { Container } from "../Container";
 import { useEvents, formatEventDateTime } from "../../lib/events";
+import { useLanguage } from "../../lib/i18n/context";
 
 export function EventsPreview() {
   const { events } = useEvents();
+  const { language, t } = useLanguage();
   const upcoming = events.slice(0, 2);
 
   return (
@@ -14,17 +16,17 @@ export function EventsPreview() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <span className="text-sm font-semibold tracking-wide text-blue uppercase">
-              Event Terbaru
+              {t.eventsPreview.eyebrow}
             </span>
             <h2 className="mt-3 font-display text-3xl font-extrabold text-ink sm:text-4xl">
-              Ikuti kegiatan GPH
+              {t.eventsPreview.title}
             </h2>
           </div>
           <Link
             to="/events"
             className="font-semibold text-blue-dark hover:text-blue"
           >
-            Lihat semua event →
+            {t.eventsPreview.viewAll}
           </Link>
         </div>
 
@@ -47,7 +49,7 @@ export function EventsPreview() {
               <div className="mt-5 flex flex-wrap gap-4 text-sm font-medium text-ink/60">
                 <span className="flex items-center gap-1.5">
                   <HiOutlineCalendar className="text-blue-dark" />
-                  {formatEventDateTime(event.date)}
+                  {formatEventDateTime(event.date, language)}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <HiOutlineMapPin className="text-blue-dark" />

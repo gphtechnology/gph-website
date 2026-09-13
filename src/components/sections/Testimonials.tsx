@@ -1,27 +1,24 @@
 import { motion } from "framer-motion";
 import { Container } from "../Container";
-
-const quotes = [
-  "Kepala penuh banget, bingung harus mulai cerita darimana.",
-  "Aku cuma butuh didengar, bukan dihakimi.",
-  "Ternyata boleh, kok, minta tolong duluan.",
-];
+import { useLanguage } from "../../lib/i18n/context";
 
 export function Testimonials() {
+  const { t } = useLanguage();
+
   return (
     <section className="py-24">
       <Container>
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-semibold tracking-wide text-blue uppercase">
-            Suara Mereka
+            {t.testimonials.eyebrow}
           </span>
           <h2 className="mt-3 font-display text-3xl font-extrabold text-ink sm:text-4xl">
-            Kamu tidak sendirian
+            {t.testimonials.title}
           </h2>
         </div>
 
         <div className="mt-14 grid gap-6 sm:grid-cols-3">
-          {quotes.map((quote, index) => (
+          {t.testimonials.quotes.map((quote, index) => (
             <motion.div
               key={quote}
               initial={{ opacity: 0, y: 24 }}

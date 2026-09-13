@@ -12,21 +12,33 @@ type EventRow = {
   image_url: string | null;
 };
 
-const eventDateFormatter = new Intl.DateTimeFormat("id-ID", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
+const formatters = {
+  id: new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }),
+  en: new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }),
+};
 
 /**
  * `date` is a naive WIB wall-clock string (no timezone offset), so
  * `new Date(...)` parses it as local time and this always prints the
  * same numbers regardless of the viewer's own timezone.
  */
-export function formatEventDateTime(date: string): string {
-  return `${eventDateFormatter.format(new Date(date))} WIB`;
+export function formatEventDateTime(
+  date: string,
+  locale: "id" | "en" = "id",
+): string {
+  return `${formatters[locale].format(new Date(date))} WIB`;
 }
 
 function mapRow(row: EventRow): GphEvent {

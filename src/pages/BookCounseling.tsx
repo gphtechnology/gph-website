@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Container } from "../components/Container";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
+import { useLanguage } from "../lib/i18n/context";
 import {
   DAILY_SLOT_TIMES,
   HOLD_SECONDS,
@@ -19,6 +20,7 @@ type Phase = "form" | "holding" | "awaiting_confirmation" | "expired";
 const priceLabel = SESSION_PRICE_IDR.toLocaleString("id-ID");
 
 export function BookCounseling() {
+  const { t } = useLanguage();
   const [counselors, setCounselors] = useState<Counselor[]>([]);
   const [counselorId, setCounselorId] = useState("");
   const [date, setDate] = useState(getMinBookingDate());
@@ -39,7 +41,7 @@ export function BookCounseling() {
         setCounselors(rows);
         if (rows.length > 0) setCounselorId(rows[0].id);
       })
-      .catch(() => setError("Gagal memuat daftar konselor."));
+      .catch(() => setError(t.bookCounseling.errorLoadCounselors));
   }, []);
 
   useEffect(() => {
@@ -84,13 +86,13 @@ export function BookCounseling() {
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       if (message.includes("slot_taken")) {
-        setError("Slot ini baru saja diambil orang lain. Coba pilih slot lain.");
+        setError(t.bookCounseling.errorSlotTaken);
         listTakenSlots(counselorId, date).then(setTakenSlots);
         setTime(null);
       } else if (message.includes("h1_only")) {
-        setError("Booking hanya bisa dilakukan untuk besok atau setelahnya.");
+        setError(t.bookCounseling.errorH1Only);
       } else {
-        setError("Gagal membuat booking. Coba lagi sebentar.");
+        setError(t.bookCounseling.errorGeneric);
       }
     } finally {
       setSubmitting(false);
@@ -106,7 +108,7 @@ export function BookCounseling() {
       setBooking(updated);
       setPhase("awaiting_confirmation");
     } catch {
-      setError("Waktu hold sudah habis. Silakan booking ulang.");
+      setError(t.bookCounseling.errorHoldExpired);
       setPhase("expired");
     } finally {
       setSubmitting(false);
@@ -124,7 +126,7 @@ export function BookCounseling() {
   if (!isSupabaseConfigured) {
     return (
       <Container className="max-w-2xl py-20">
-        <p className="text-ink/70">Supabase belum dikonfigurasi.</p>
+        <p className="text-ink/70">{t.bookCounseling.notConfigured}</p>
       </Container>
     );
   }
@@ -133,18 +135,17 @@ export function BookCounseling() {
     <section className="py-20">
       <Container className="max-w-2xl">
         <h1 className="font-display text-3xl font-extrabold text-ink sm:text-4xl">
-          Book Counseling
+          {t.bookCounseling.title}
         </h1>
         <p className="mt-4 leading-relaxed text-ink/70">
-          Booking sesi konseling hanya bisa dilakukan untuk besok atau
-          setelahnya (H+1), supaya tim GPH bisa menyiapkan sesi terbaikmu.
+          {t.bookCounseling.policyNote}
         </p>
 
         {phase === "form" && (
           <form onSubmit={handleSubmit} className="mt-10 space-y-5">
             <div>
               <label className="text-sm font-semibold text-ink/80">
-                Konselor
+                {t.bookCounseling.labelCounselor}
               </label>
               <select
                 value={counselorId}
@@ -161,7 +162,7 @@ export function BookCounseling() {
 
             <div>
               <label className="text-sm font-semibold text-ink/80">
-                Tanggal
+                {t.bookCounseling.labelDate}
               </label>
               <input
                 type="date"
@@ -175,7 +176,7 @@ export function BookCounseling() {
 
             <div>
               <label className="text-sm font-semibold text-ink/80">
-                Jam (WIB)
+                {t.bookCounseling.labelTime}
               </label>
               <div className="mt-2 flex flex-wrap gap-2">
                 {DAILY_SLOT_TIMES.map((slot) => {
@@ -203,7 +204,7 @@ export function BookCounseling() {
 
             <div>
               <label className="text-sm font-semibold text-ink/80">
-                Nama
+                {t.bookCounseling.labelName}
               </label>
               <input
                 type="text"
@@ -216,7 +217,7 @@ export function BookCounseling() {
 
             <div>
               <label className="text-sm font-semibold text-ink/80">
-                Email
+                {t.bookCounseling.labelEmail}
               </label>
               <input
                 type="email"
@@ -226,8 +227,7 @@ export function BookCounseling() {
                 className="mt-2 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 outline-none focus:border-blue"
               />
               <p className="mt-1 text-xs text-ink/50">
-                Link Zoom akan dikirim ke email ini setelah pembayaran
-                dikonfirmasi.
+                {t.bookCounseling.emailHint}
               </p>
             </div>
 
@@ -239,8 +239,8 @@ export function BookCounseling() {
               className="w-full rounded-full bg-blue px-7 py-3.5 font-semibold text-white transition-colors hover:bg-blue-dark disabled:opacity-50"
             >
               {submitting
-                ? "Memproses..."
-                : `Lanjut ke Pembayaran — Rp${priceLabel}`}
+                ? t.bookCounseling.submitting
+                : t.bookCounseling.submitWithPrice(priceLabel)}
             </button>
           </form>
         )}
@@ -248,14 +248,14 @@ export function BookCounseling() {
         {phase === "holding" && booking && (
           <div className="mt-10 rounded-3xl bg-peach/20 p-8 text-center">
             <p className="font-semibold text-ink">
-              Selesaikan pembayaran dalam
+              {t.bookCounseling.holdingTitle}
             </p>
             <p className="mt-2 font-display text-4xl font-extrabold text-blue-dark">
               {Math.floor(secondsLeft / 60)}:
               {String(secondsLeft % 60).padStart(2, "0")}
             </p>
             <p className="mt-1 text-sm text-ink/60">
-              Slot ini dikunci khusus untukmu selama waktu berjalan.
+              {t.bookCounseling.holdingSubtitle}
             </p>
 
             <img
@@ -267,7 +267,7 @@ export function BookCounseling() {
               }}
             />
             <p className="mt-4 text-sm text-ink/70">
-              Scan QRIS di atas, transfer tepat{" "}
+              {t.bookCounseling.scanPrefix}{" "}
               <span className="font-semibold">Rp{priceLabel}</span>.
             </p>
 
@@ -277,7 +277,7 @@ export function BookCounseling() {
               disabled={submitting}
               className="mt-6 w-full rounded-full bg-blue px-7 py-3.5 font-semibold text-white transition-colors hover:bg-blue-dark disabled:opacity-50"
             >
-              {submitting ? "Memproses..." : "Saya Sudah Bayar"}
+              {submitting ? t.bookCounseling.submitting : t.bookCounseling.paidButton}
             </button>
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
           </div>
@@ -286,28 +286,29 @@ export function BookCounseling() {
         {phase === "awaiting_confirmation" && (
           <div className="mt-10 rounded-3xl bg-blue/10 p-8 text-center">
             <p className="font-semibold text-blue-dark">
-              Menunggu konfirmasi tim GPH
+              {t.bookCounseling.awaitingTitle}
             </p>
             <p className="mt-2 text-sm text-ink/70">
-              Slotmu sudah diamankan. Setelah pembayaran kami verifikasi,
-              link Zoom akan dikirim ke <strong>{email}</strong>.
+              {t.bookCounseling.awaitingPrefix} <strong>{email}</strong>
+              {t.bookCounseling.awaitingSuffix}
             </p>
           </div>
         )}
 
         {phase === "expired" && (
           <div className="mt-10 rounded-3xl bg-red-50 p-8 text-center">
-            <p className="font-semibold text-red-700">Waktu habis</p>
+            <p className="font-semibold text-red-700">
+              {t.bookCounseling.expiredTitle}
+            </p>
             <p className="mt-2 text-sm text-ink/70">
-              Slot dilepas kembali karena pembayaran tidak diselesaikan
-              dalam 90 detik.
+              {t.bookCounseling.expiredSubtitle}
             </p>
             <button
               type="button"
               onClick={resetToForm}
               className="mt-6 rounded-full bg-blue px-7 py-3 font-semibold text-white hover:bg-blue-dark"
             >
-              Coba Lagi
+              {t.bookCounseling.retry}
             </button>
           </div>
         )}

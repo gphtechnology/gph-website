@@ -3,15 +3,17 @@ import { Link, NavLink } from "react-router-dom";
 import { HiOutlineMenu, HiOutlineX } from "react-icons/hi";
 import { Logo } from "./Logo";
 import { Container } from "./Container";
-
-const navLinks = [
-  { label: "Tentang Kami", href: "/#about" },
-  { label: "Layanan", href: "/#services" },
-  { label: "Event", href: "/events" },
-];
+import { useLanguage } from "../lib/i18n/context";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
+
+  const navLinks = [
+    { label: t.nav.about, href: "/#about" },
+    { label: t.nav.services, href: "/#services" },
+    { label: t.nav.events, href: "/events" },
+  ];
 
   return (
     <header className="sticky top-0 z-50 border-b border-black/5 bg-cream/90 backdrop-blur">
@@ -34,8 +36,24 @@ export function Navbar() {
             to="/book-counseling"
             className="rounded-full bg-blue px-5 py-2.5 font-semibold text-white transition-colors hover:bg-blue-dark"
           >
-            Book Counseling
+            {t.nav.bookCounseling}
           </Link>
+          <div className="flex rounded-full border border-ink/15 p-0.5 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setLanguage("id")}
+              className={`rounded-full px-2.5 py-1 transition-colors ${language === "id" ? "bg-blue text-white" : "text-ink/60 hover:text-ink"}`}
+            >
+              ID
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage("en")}
+              className={`rounded-full px-2.5 py-1 transition-colors ${language === "en" ? "bg-blue text-white" : "text-ink/60 hover:text-ink"}`}
+            >
+              EN
+            </button>
+          </div>
         </nav>
 
         <button
@@ -67,8 +85,24 @@ export function Navbar() {
               onClick={() => setOpen(false)}
               className="rounded-full bg-blue px-5 py-2.5 text-center font-semibold text-white"
             >
-              Book Counseling
+              {t.nav.bookCounseling}
             </Link>
+            <div className="flex justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setLanguage("id")}
+                className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${language === "id" ? "border-blue bg-blue text-white" : "border-ink/15 text-ink/60"}`}
+              >
+                Indonesia
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${language === "en" ? "border-blue bg-blue text-white" : "border-ink/15 text-ink/60"}`}
+              >
+                English
+              </button>
+            </div>
           </Container>
         </div>
       )}

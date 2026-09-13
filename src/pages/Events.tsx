@@ -1,26 +1,27 @@
 import { HiOutlineMapPin, HiOutlineCalendar } from "react-icons/hi2";
 import { Container } from "../components/Container";
 import { useEvents, formatEventDateTime } from "../lib/events";
+import { useLanguage } from "../lib/i18n/context";
 
 export function Events() {
   const { events, loading } = useEvents();
+  const { language, t } = useLanguage();
 
   return (
     <section className="py-20">
       <Container>
         <span className="text-sm font-semibold tracking-wide text-blue uppercase">
-          Event GPH
+          {t.eventsPage.eyebrow}
         </span>
         <h1 className="mt-3 font-display text-3xl font-extrabold text-ink sm:text-4xl">
-          Semua kegiatan & pengumuman
+          {t.eventsPage.title}
         </h1>
         <p className="mt-4 max-w-2xl leading-relaxed text-ink/70">
-          Daftar ini dikelola langsung oleh tim GPH lewat Supabase, jadi
-          selalu menampilkan event terbaru.
+          {t.eventsPage.subtitle}
         </p>
 
         {loading ? (
-          <p className="mt-12 text-sm text-ink/50">Memuat event...</p>
+          <p className="mt-12 text-sm text-ink/50">{t.eventsPage.loading}</p>
         ) : (
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {events.map((event) => (
@@ -37,7 +38,7 @@ export function Events() {
                 <div className="mt-5 flex flex-wrap gap-4 text-sm font-medium text-ink/60">
                   <span className="flex items-center gap-1.5">
                     <HiOutlineCalendar className="text-blue-dark" />
-                    {formatEventDateTime(event.date)}
+                    {formatEventDateTime(event.date, language)}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <HiOutlineMapPin className="text-blue-dark" />
@@ -51,7 +52,7 @@ export function Events() {
                     rel="noreferrer"
                     className="mt-5 inline-block font-semibold text-blue-dark hover:text-blue"
                   >
-                    Daftar sekarang →
+                    {t.eventsPage.registerNow}
                   </a>
                 )}
               </article>

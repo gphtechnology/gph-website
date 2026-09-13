@@ -42,11 +42,31 @@ src/
   lib/adminEvents.ts     Admin CRUD for events
   lib/booking.ts         Public booking flow (slots, hold, confirm)
   lib/adminBookings.ts   Admin booking confirmation/cancellation
+  lib/i18n/              ID/EN translations + language context
 
 supabase/
   schema.sql, 00N_*.sql  Migrations, run in order in the SQL Editor
   functions/             Edge Functions (Deno), deployed via Supabase CLI
 ```
+
+## Language (ID/EN)
+
+The public-facing pages (everything except `/admin`, which is an
+internal tool for the GPH team) support Indonesian and English via a
+lightweight custom context — no i18n library, just plain dictionaries:
+
+- `src/lib/i18n/id.ts` / `en.ts` — the two translation dictionaries.
+  `en.ts` is typed as `typeof id`, so TypeScript catches a missing key
+  in either language at build time.
+- `src/lib/i18n/context.tsx` — `LanguageProvider` (wraps the app in
+  `main.tsx`) and the `useLanguage()` hook, which returns
+  `{ language, setLanguage, t }`. `t` is the current dictionary.
+- The switcher lives in the navbar; the choice persists in
+  `localStorage` (defaults to Indonesian).
+
+To add a new piece of text: add the key to `id.ts` first, then `en.ts`
+— TypeScript will error if `en.ts` is missing anything `id.ts` has, so
+the two can't drift out of sync silently.
 
 ## Roadmap / feature flags already scaffolded
 
