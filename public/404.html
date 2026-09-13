@@ -9,11 +9,13 @@
       (https://github.com/rafgraph/spa-github-pages): redirect the 404
       back to index.html with the intended path encoded in the query
       string, then index.html restores it via history.replaceState.
-      pathSegmentsToKeep is 0 because this site is served from the
-      domain root (custom domain), not a /<repo-name>/ subpath.
+      pathSegmentsToKeep is 1 while previewing at the default
+      /gph-website/ subpath below. Change it back to 0 together with
+      vite.config.ts's `base` once the custom domain (served from the
+      root) is connected — see README.
     -->
     <script type="text/javascript">
-      var pathSegmentsToKeep = 0;
+      var pathSegmentsToKeep = 1;
       var l = window.location;
       l.replace(
         l.protocol +

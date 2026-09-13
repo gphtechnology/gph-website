@@ -3,9 +3,12 @@ import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
-// base is "/" because this site will be served from a custom domain
-// (see README for the GitHub Pages project-site fallback).
+// TEMPORARY: base is "/gph-website/" so the site previews correctly at
+// the default GitHub Pages project URL (gphtechnology.github.io/gph-website/).
+// Switch this back to "/" once the Hostinger custom domain is connected
+// (see README) — a custom domain serves from the root, so "/" is
+// required there.
 export default defineConfig({
-  base: '/',
+  base: '/gph-website/',
   plugins: [react(), tailwindcss()],
 })
