@@ -17,6 +17,12 @@ import {
   confirmBookingPayment,
   type PendingBooking,
 } from "../lib/adminBookings";
+import {
+  listAllCounselors,
+  generateTempPassword,
+  createCounselorAccount,
+  type CounselorRow,
+} from "../lib/adminCounselors";
 
 const emptyForm: EventInput = {
   title: "",
@@ -71,9 +77,163 @@ function Dashboard() {
       </div>
 
       <div className="mt-16">
+        <CounselorManager />
+      </div>
+
+      <div className="mt-16">
         <EventManager />
       </div>
     </Container>
+  );
+}
+
+function CounselorManager() {
+  const [counselors, setCounselors] = useState<CounselorRow[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
+  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState(generateTempPassword());
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [lastCreated, setLastCreated] = useState<{
+    email: string;
+    password: string;
+  } | null>(null);
+
+  async function refresh() {
+    setLoadingList(true);
+    try {
+      setCounselors(await listAllCounselors());
+    } finally {
+      setLoadingList(false);
+    }
+  }
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setSubmitting(true);
+    setStatus(null);
+    setLastCreated(null);
+    try {
+      await createCounselorAccount({ name, title, email, password });
+      setLastCreated({ email, password });
+      setName("");
+      setTitle("");
+      setEmail("");
+      setPassword(generateTempPassword());
+      await refresh();
+    } catch (err) {
+      setStatus(
+        err instanceof Error
+          ? `Gagal menambah konselor: ${err.message}`
+          : "Gagal menambah konselor.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div>
+      <h2 className="font-display text-xl font-bold text-ink">
+        Tambah Konselor Baru
+      </h2>
+      <p className="mt-1 text-sm text-ink/60">
+        Ini otomatis bikin akun login konselor sekaligus — mereka bisa
+        langsung masuk ke <code>/counselor</code> untuk atur jadwal
+        ketersediaan.
+      </p>
+
+      <form
+        onSubmit={handleSubmit}
+        className="mt-6 space-y-4 rounded-3xl bg-peach/20 p-6"
+      >
+        <input
+          type="text"
+          placeholder="Nama (mis. Joice Benedicta, S.Psi)"
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 outline-none focus:border-blue"
+        />
+        <input
+          type="text"
+          placeholder="Peran (mis. Peer Counselor)"
+          required
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 outline-none focus:border-blue"
+        />
+        <input
+          type="email"
+          placeholder="Email login"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 outline-none focus:border-blue"
+        />
+        <div>
+          <label className="text-xs font-semibold text-ink/50">
+            Password sementara (bagikan ke konselor)
+          </label>
+          <input
+            type="text"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mt-1 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 font-mono outline-none focus:border-blue"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-full bg-blue px-6 py-2.5 font-semibold text-white transition-colors hover:bg-blue-dark disabled:opacity-50"
+        >
+          {submitting ? "Memproses..." : "Tambah Konselor"}
+        </button>
+        {status && <p className="text-sm text-red-600">{status}</p>}
+      </form>
+
+      {lastCreated && (
+        <div className="mt-4 rounded-2xl bg-blue/10 p-5 text-sm text-ink/80">
+          <p className="font-semibold text-blue-dark">
+            Akun berhasil dibuat! Bagikan info login ini ke konselornya:
+          </p>
+          <p className="mt-2">
+            Email: <span className="font-mono">{lastCreated.email}</span>
+          </p>
+          <p>
+            Password:{" "}
+            <span className="font-mono">{lastCreated.password}</span>
+          </p>
+          <p className="mt-2 text-xs text-ink/60">
+            Mereka login di <code>/counselor</code> untuk atur jadwal.
+          </p>
+        </div>
+      )}
+
+      <div className="mt-6 space-y-2">
+        {loadingList ? (
+          <p className="text-sm text-ink/50">Memuat...</p>
+        ) : (
+          counselors.map((c) => (
+            <div
+              key={c.id}
+              className="rounded-2xl bg-cream p-4 text-sm ring-1 ring-black/5"
+            >
+              <span className="font-semibold text-ink">{c.name}</span>
+              <span className="text-ink/60"> — {c.title}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
   );
 }
 

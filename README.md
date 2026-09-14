@@ -42,6 +42,7 @@ src/
   lib/adminEvents.ts     Admin CRUD for events
   lib/booking.ts         Public booking flow (slots, hold, confirm)
   lib/adminBookings.ts   Admin booking confirmation/cancellation
+  lib/adminCounselors.ts Admin: create counselor accounts
   lib/i18n/              ID/EN translations + language context
 
 supabase/
@@ -212,21 +213,26 @@ taken.
    **This also tightens `events`/`bookings` RLS to admin-only** — a
    necessary change now that counselor accounts share the same
    Supabase Auth pool as admins (previously "logged in" and "admin"
-   were the same thing).
-2. For each counselor:
-   - Create their login under **Authentication → Users → Add user**
-     (check "Auto Confirm User"), same as an admin account.
-   - Insert a row in the `profiles` table (Table Editor) with `id` =
-     that user's UID (copy it from the Users list), `role` =
-     `counselor`, and `counselor_id` = their row in the `counselors`
-     table.
-3. The counselor logs in at `/counselor` and checks off which slots
-   they work each weekday — no code change or redeploy needed after
-   that.
+   were the same thing). Existing admin accounts need a `profiles` row
+   too after this runs (`role = 'admin'`, `counselor_id` left null) —
+   without one, `is_admin()` returns false and they lose access to
+   managing events/bookings:
+   ```sql
+   insert into public.profiles (id, role) values ('<admin-user-uid>', 'admin');
+   ```
+   (find the UID under Authentication → Users).
+2. Deploy the `create-counselor` Edge Function the same way as
+   `confirm-booking-payment` (dashboard editor or CLI) — same secrets,
+   no new ones needed.
+3. From then on, adding a counselor is just the **"Tambah Konselor
+   Baru"** form on `/admin` — it creates their Supabase Auth login,
+   `counselors` row, and `profiles` row in one call, and shows a
+   temporary password to hand them. They log in at `/counselor` and
+   check off which slots they work each weekday.
 
-Admin accounts need a `profiles` row too now (`role` = `admin`,
-`counselor_id` left null) — without one, `is_admin()` returns false
-and they'll lose access to managing events/bookings.
+   (The old manual path — Authentication → Users → Add user, then a
+   matching `profiles` row by hand — still works if you ever need it,
+   e.g. bypassing the form for scripted bulk setup.)
 
 ## Brand reference
 
