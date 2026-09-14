@@ -134,14 +134,15 @@ just go there directly.
 only** — today or same-day booking is blocked, enforced in the
 database, not just the UI), and a time slot from a fixed daily
 template (`DAILY_SLOT_TIMES` in `src/lib/booking.ts`). Picking a slot
-**holds it for 90 seconds** (`HOLD_SECONDS`) while a static QRIS image
-is shown; nobody else can grab that slot until the hold expires. This
-is all enforced by the three Postgres functions in
-`supabase/004_booking_system.sql` (`request_booking_hold`,
-`mark_awaiting_payment_confirmation`, `list_taken_slots`), which use
-`pg_advisory_xact_lock` so two people can't win the same slot in a
-race. No cron job is needed — an expired hold is cleaned up lazily,
-the next time anyone tries to book that exact slot again.
+**holds it for 3 minutes** (`HOLD_SECONDS`) while a static QRIS image
+and a manual bank transfer alternative are shown; nobody else can grab
+that slot until the hold expires. This is enforced by the Postgres
+functions in `supabase/004_booking_system.sql`, redefined by later
+migrations (`request_booking_hold`, `mark_awaiting_payment_confirmation`,
+`list_open_slots`), which use `pg_advisory_xact_lock` so two people
+can't win the same slot in a race. No cron job is needed — an expired
+hold is cleaned up lazily, the next time anyone tries to book that
+exact slot again.
 
 **No payment gateway is wired in.** Getting real, API-driven QRIS
 requires a licensed payment aggregator (Xendit, Midtrans, etc.), which
@@ -149,13 +150,17 @@ needs business verification — a blocker for now. Instead:
 
 1. Customer scans a **static QRIS image** you provide (from a bank's
    merchant app like BRI Merchant/Merchant BCA, or GoBiz/DANA Bisnis)
-   and transfers manually.
-2. Customer clicks "Saya Sudah Bayar" → booking status becomes
-   `awaiting_confirmation` (slot stays reserved).
-3. An admin checks the actual transfer landed, then clicks **"Konfirmasi
-   Pembayaran"** on `/admin` — this calls the
-   `confirm-booking-payment` Edge Function, which creates the Zoom
-   meeting and emails the join link, fully automatically.
+   — or transfers manually to the bank account shown as an
+   alternative (`BANK_TRANSFER_INFO` in `src/lib/booking.ts` —
+   **currently a placeholder**, replace with GPH's real account).
+2. Customer uploads a screenshot of the transfer as proof → it's
+   stored in a private Supabase Storage bucket (`payment-proofs`) and
+   the booking status becomes `awaiting_confirmation` (slot stays
+   reserved).
+3. An admin opens the proof image on `/admin`, checks the actual
+   transfer landed, then clicks **"Konfirmasi Pembayaran"** — this
+   calls the `confirm-booking-payment` Edge Function, which creates
+   the Zoom meeting and emails the join link, fully automatically.
 
 This can be swapped for a real payment webhook later without changing
 the booking/hold logic — only step 2-3 would become automatic.
@@ -165,11 +170,18 @@ the booking/hold logic — only step 2-3 would become automatic.
 1. Run `supabase/004_booking_system.sql` in the SQL Editor — creates
    `counselors` (seeded with 3 example counselors — edit via Table
    Editor) and `bookings`, plus the three functions above.
-2. Add `public/qris.jpeg` — your static QRIS image (from whichever
+2. Run `supabase/007_payment_proof_and_hold_duration.sql` — bumps the
+   hold to 3 minutes, adds `bookings.payment_proof_path`, and creates
+   the private `payment-proofs` Storage bucket (customers can only
+   upload; only `is_admin()` can read, via a signed URL) — needs
+   `005_counselor_availability.sql` run first (it uses `is_admin()`).
+3. Add `public/qris.jpeg` — your static QRIS image (from whichever
    bank or e-wallet merchant account you register). The booking page
    references it directly; if the file is missing it just hides the
-   broken image rather than crashing.
-3. Deploy the Edge Function (needs the
+   broken image rather than crashing. Also update the placeholder
+   `BANK_TRANSFER_INFO` in `src/lib/booking.ts` with GPH's real bank
+   account before going live.
+4. Deploy the Edge Function (needs the
    [Supabase CLI](https://supabase.com/docs/guides/cli)):
    ```bash
    supabase link --project-ref botuofmfczbeyolcoeuc
@@ -177,7 +189,7 @@ the booking/hold logic — only step 2-3 would become automatic.
    ```
    Leave JWT verification **on** (the default) — that's what restricts
    this function to logged-in admins.
-4. Set the function's secrets (never committed to git):
+5. Set the function's secrets (never committed to git):
    ```bash
    supabase secrets set \
      ZOOM_ACCOUNT_ID=... \

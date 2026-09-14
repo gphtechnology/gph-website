@@ -5,10 +5,12 @@ import { useLanguage } from "../lib/i18n/context";
 import {
   HOLD_SECONDS,
   SESSION_PRICE_IDR,
+  BANK_TRANSFER_INFO,
   getMinBookingDate,
   listCounselors,
   listOpenSlots,
   requestBookingHold,
+  uploadPaymentProof,
   markAwaitingConfirmation,
   type Counselor,
   type Booking,
@@ -33,6 +35,7 @@ export function BookCounseling() {
   const [phase, setPhase] = useState<Phase>("form");
   const [booking, setBooking] = useState<Booking | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(HOLD_SECONDS);
+  const [proofFile, setProofFile] = useState<File | null>(null);
 
   useEffect(() => {
     listCounselors()
@@ -98,12 +101,26 @@ export function BookCounseling() {
     }
   }
 
-  async function handlePaid() {
+  async function handleSubmitProof() {
     if (!booking) return;
+    if (!proofFile) {
+      setError(t.bookCounseling.errorNoProof);
+      return;
+    }
     setSubmitting(true);
     setError(null);
+
+    let proofPath: string;
     try {
-      const updated = await markAwaitingConfirmation(booking.id);
+      proofPath = await uploadPaymentProof(booking.id, proofFile);
+    } catch {
+      setError(t.bookCounseling.errorUploadFailed);
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      const updated = await markAwaitingConfirmation(booking.id, proofPath);
       setBooking(updated);
       setPhase("awaiting_confirmation");
     } catch {
@@ -118,6 +135,7 @@ export function BookCounseling() {
     setPhase("form");
     setBooking(null);
     setTime(null);
+    setProofFile(null);
     setError(null);
     listOpenSlots(counselorId, date).then(setOpenSlots);
   }
@@ -270,9 +288,44 @@ export function BookCounseling() {
               <span className="font-semibold">Rp{priceLabel}</span>.
             </p>
 
+            <div className="mt-4 rounded-2xl bg-cream/60 p-4 text-left text-sm text-ink/70">
+              <p className="font-semibold text-ink/80">
+                {t.bookCounseling.orTransferManual}
+              </p>
+              <p className="mt-1">
+                {t.bookCounseling.bankLabel}: {BANK_TRANSFER_INFO.bankName}
+              </p>
+              <p>
+                {t.bookCounseling.accountNumberLabel}:{" "}
+                <span className="font-mono">
+                  {BANK_TRANSFER_INFO.accountNumber}
+                </span>
+              </p>
+              <p>
+                {t.bookCounseling.accountHolderLabel}:{" "}
+                {BANK_TRANSFER_INFO.accountHolder}
+              </p>
+            </div>
+
+            <div className="mt-4 text-left">
+              <label className="text-sm font-semibold text-ink/80">
+                {t.bookCounseling.uploadLabel}
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                required
+                onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+                className="mt-2 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 text-sm outline-none focus:border-blue"
+              />
+              <p className="mt-1 text-xs text-ink/50">
+                {t.bookCounseling.uploadHint}
+              </p>
+            </div>
+
             <button
               type="button"
-              onClick={handlePaid}
+              onClick={handleSubmitProof}
               disabled={submitting}
               className="mt-6 w-full rounded-full bg-blue px-7 py-3.5 font-semibold text-white transition-colors hover:bg-blue-dark disabled:opacity-50"
             >

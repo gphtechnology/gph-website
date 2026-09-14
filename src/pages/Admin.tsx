@@ -419,6 +419,24 @@ function BookingManager() {
                 <p className="text-sm text-ink/60">
                   {booking.user_name} — {booking.user_email}
                 </p>
+                {booking.proof_url ? (
+                  <a
+                    href={booking.proof_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block"
+                  >
+                    <img
+                      src={booking.proof_url}
+                      alt="Bukti pembayaran"
+                      className="h-24 w-24 rounded-lg border border-ink/15 object-cover"
+                    />
+                  </a>
+                ) : (
+                  <p className="mt-2 text-xs text-red-600">
+                    Belum ada bukti pembayaran diupload.
+                  </p>
+                )}
               </div>
               <div className="flex shrink-0 gap-3 text-sm font-semibold">
                 <button

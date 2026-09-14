@@ -22,6 +22,7 @@ export type Booking = {
   status: BookingStatus;
   held_until: string | null;
   zoom_join_url: string | null;
+  payment_proof_path: string | null;
 };
 
 // Fixed daily template — which of these are actually bookable for a
@@ -36,9 +37,18 @@ export const DAILY_SLOT_TIMES = [
   "20:00",
 ];
 
-export const HOLD_SECONDS = 90;
+export const HOLD_SECONDS = 3 * 60;
 
 export const SESSION_PRICE_IDR = 30000;
+
+const PAYMENT_PROOF_BUCKET = "payment-proofs";
+
+// PLACEHOLDER — replace with GPH's real bank account before going live.
+export const BANK_TRANSFER_INFO = {
+  bankName: "Bank Contoh",
+  accountNumber: "1234567890",
+  accountHolder: "Gigajo Psychological House",
+};
 
 /** Earliest bookable date (WIB), as YYYY-MM-DD — bookings are H+1 only. */
 export function getMinBookingDate(): string {
@@ -91,13 +101,27 @@ export async function requestBookingHold(input: {
   return data as Booking;
 }
 
+export async function uploadPaymentProof(
+  bookingId: string,
+  file: File,
+): Promise<string> {
+  if (!supabase) throw new Error("Supabase belum dikonfigurasi");
+  const path = `${bookingId}/${Date.now()}-${file.name}`;
+  const { error } = await supabase.storage
+    .from(PAYMENT_PROOF_BUCKET)
+    .upload(path, file);
+  if (error) throw error;
+  return path;
+}
+
 export async function markAwaitingConfirmation(
   bookingId: string,
+  paymentProofPath: string,
 ): Promise<Booking> {
   if (!supabase) throw new Error("Supabase belum dikonfigurasi");
   const { data, error } = await supabase.rpc(
     "mark_awaiting_payment_confirmation",
-    { p_booking_id: bookingId },
+    { p_booking_id: bookingId, p_payment_proof_path: paymentProofPath },
   );
   if (error) throw error;
   return data as Booking;

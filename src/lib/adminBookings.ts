@@ -2,7 +2,13 @@ import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 import type { Booking } from "./booking";
 
-export type PendingBooking = Booking & { counselor_name: string };
+export type PendingBooking = Booking & {
+  counselor_name: string;
+  proof_url: string | null;
+};
+
+const PAYMENT_PROOF_BUCKET = "payment-proofs";
+const PROOF_URL_TTL_SECONDS = 60 * 60; // 1 hour, plenty for one review session
 
 export async function listAwaitingConfirmation(): Promise<PendingBooking[]> {
   if (!supabase) return [];
@@ -12,10 +18,23 @@ export async function listAwaitingConfirmation(): Promise<PendingBooking[]> {
     .eq("status", "awaiting_confirmation")
     .order("slot_datetime");
   if (error) throw error;
-  return (data ?? []).map((row) => ({
-    ...row,
-    counselor_name: row.counselors?.name ?? "-",
-  }));
+
+  return Promise.all(
+    (data ?? []).map(async (row) => {
+      let proofUrl: string | null = null;
+      if (row.payment_proof_path) {
+        const { data: signed } = await supabase!.storage
+          .from(PAYMENT_PROOF_BUCKET)
+          .createSignedUrl(row.payment_proof_path, PROOF_URL_TTL_SECONDS);
+        proofUrl = signed?.signedUrl ?? null;
+      }
+      return {
+        ...row,
+        counselor_name: row.counselors?.name ?? "-",
+        proof_url: proofUrl,
+      };
+    }),
+  );
 }
 
 export async function cancelBooking(id: string) {
