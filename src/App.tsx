@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
@@ -25,22 +25,32 @@ function ScrollManager() {
   return null;
 }
 
-function App() {
+function PublicLayout() {
   return (
     <div className="flex min-h-screen flex-col">
-      <ScrollManager />
       <Navbar />
       <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/book-counseling" element={<BookCounseling />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/counselor" element={<Counselor />} />
-        </Routes>
+        <Outlet />
       </main>
       <Footer />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <>
+      <ScrollManager />
+      <Routes>
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/book-counseling" element={<BookCounseling />} />
+          <Route path="/events" element={<Events />} />
+        </Route>
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/counselor" element={<Counselor />} />
+      </Routes>
+    </>
   );
 }
 

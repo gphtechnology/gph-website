@@ -485,10 +485,7 @@ function LoginForm() {
       <h1 className="font-display text-2xl font-extrabold text-ink">
         Admin Login
       </h1>
-      <p className="mt-2 text-sm text-ink/60">
-        Khusus tim GPH. Akun dibuat lewat Supabase Dashboard (Authentication →
-        Users).
-      </p>
+      <p className="mt-2 text-sm text-ink/60">Khusus tim GPH.</p>
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <div>
           <label className="text-sm font-semibold text-ink/80">Email</label>

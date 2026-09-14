@@ -70,7 +70,7 @@ function LoginForm() {
         Login Konselor
       </h1>
       <p className="mt-2 text-sm text-ink/60">
-        Akun dibuat oleh tim GPH lewat Supabase Dashboard.
+        Belum punya akun? Hubungi tim GPH.
       </p>
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <div>
@@ -241,6 +241,92 @@ function AvailabilityEditor({ userId }: { userId: string }) {
           </tbody>
         </table>
       </div>
+
+      <ChangePasswordForm />
     </Container>
+  );
+}
+
+function ChangePasswordForm() {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setSuccess(false);
+    if (newPassword.length < 8) {
+      setError("Password minimal 8 karakter.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Konfirmasi password tidak sama.");
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase!.auth.updateUser({
+      password: newPassword,
+    });
+    setSubmitting(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setSuccess(true);
+    setNewPassword("");
+    setConfirmPassword("");
+  }
+
+  return (
+    <div className="mt-12 rounded-2xl border border-ink/10 bg-white/60 p-6">
+      <h2 className="font-display text-lg font-bold text-ink">
+        Ganti Password
+      </h2>
+      <p className="mt-1 text-sm text-ink/60">
+        Ganti ke password yang lebih mudah kamu ingat.
+      </p>
+      <form onSubmit={handleSubmit} className="mt-4 max-w-sm space-y-4">
+        <div>
+          <label className="text-sm font-semibold text-ink/80">
+            Password Baru
+          </label>
+          <input
+            type="password"
+            required
+            minLength={8}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="mt-2 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 outline-none focus:border-blue"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-semibold text-ink/80">
+            Konfirmasi Password Baru
+          </label>
+          <input
+            type="password"
+            required
+            minLength={8}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="mt-2 w-full rounded-xl border border-ink/15 bg-cream px-4 py-3 outline-none focus:border-blue"
+          />
+        </div>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {success && (
+          <p className="text-sm text-green-600">Password berhasil diubah.</p>
+        )}
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-full bg-blue px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-dark disabled:opacity-60"
+        >
+          {submitting ? "Menyimpan..." : "Simpan Password Baru"}
+        </button>
+      </form>
+    </div>
   );
 }
