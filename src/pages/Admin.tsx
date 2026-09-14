@@ -18,10 +18,11 @@ import {
   type PendingBooking,
 } from "../lib/adminBookings";
 import {
-  listAllCounselors,
+  listCounselorsWithAccountStatus,
   generateTempPassword,
   createCounselorAccount,
-  type CounselorRow,
+  createLoginForCounselor,
+  type CounselorWithAccount,
 } from "../lib/adminCounselors";
 
 const emptyForm: EventInput = {
@@ -88,7 +89,7 @@ function Dashboard() {
 }
 
 function CounselorManager() {
-  const [counselors, setCounselors] = useState<CounselorRow[]>([]);
+  const [counselors, setCounselors] = useState<CounselorWithAccount[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
@@ -101,10 +102,15 @@ function CounselorManager() {
     password: string;
   } | null>(null);
 
+  const [loginTargetId, setLoginTargetId] = useState<string | null>(null);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState(generateTempPassword());
+  const [loginSubmitting, setLoginSubmitting] = useState(false);
+
   async function refresh() {
     setLoadingList(true);
     try {
-      setCounselors(await listAllCounselors());
+      setCounselors(await listCounselorsWithAccountStatus());
     } finally {
       setLoadingList(false);
     }
@@ -135,6 +141,39 @@ function CounselorManager() {
       );
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  function startLoginFor(counselorId: string) {
+    setLoginTargetId(counselorId);
+    setLoginEmail("");
+    setLoginPassword(generateTempPassword());
+    setStatus(null);
+  }
+
+  async function handleCreateLogin(event: FormEvent) {
+    event.preventDefault();
+    if (!loginTargetId) return;
+    setLoginSubmitting(true);
+    setStatus(null);
+    setLastCreated(null);
+    try {
+      await createLoginForCounselor({
+        counselorId: loginTargetId,
+        email: loginEmail,
+        password: loginPassword,
+      });
+      setLastCreated({ email: loginEmail, password: loginPassword });
+      setLoginTargetId(null);
+      await refresh();
+    } catch (err) {
+      setStatus(
+        err instanceof Error
+          ? `Gagal membuat login: ${err.message}`
+          : "Gagal membuat login.",
+      );
+    } finally {
+      setLoginSubmitting(false);
     }
   }
 
@@ -227,8 +266,65 @@ function CounselorManager() {
               key={c.id}
               className="rounded-2xl bg-cream p-4 text-sm ring-1 ring-black/5"
             >
-              <span className="font-semibold text-ink">{c.name}</span>
-              <span className="text-ink/60"> — {c.title}</span>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <span className="font-semibold text-ink">{c.name}</span>
+                  <span className="text-ink/60"> — {c.title}</span>
+                </div>
+                {c.hasAccount ? (
+                  <span className="shrink-0 text-xs font-semibold text-blue-dark">
+                    Sudah punya login
+                  </span>
+                ) : loginTargetId === c.id ? null : (
+                  <button
+                    type="button"
+                    onClick={() => startLoginFor(c.id)}
+                    className="shrink-0 rounded-full border border-blue px-3 py-1 text-xs font-semibold text-blue-dark hover:bg-blue hover:text-white"
+                  >
+                    Buat Login
+                  </button>
+                )}
+              </div>
+
+              {loginTargetId === c.id && (
+                <form
+                  onSubmit={handleCreateLogin}
+                  className="mt-3 space-y-2 border-t border-black/5 pt-3"
+                >
+                  <input
+                    type="email"
+                    placeholder="Email login"
+                    required
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    className="w-full rounded-lg border border-ink/15 bg-white px-3 py-2 text-sm outline-none focus:border-blue"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Password sementara"
+                    required
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className="w-full rounded-lg border border-ink/15 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-blue"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={loginSubmitting}
+                      className="rounded-full bg-blue px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-dark disabled:opacity-50"
+                    >
+                      {loginSubmitting ? "Memproses..." : "Simpan"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLoginTargetId(null)}
+                      className="rounded-full border border-ink/20 px-4 py-1.5 text-xs font-semibold text-ink/70"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           ))
         )}

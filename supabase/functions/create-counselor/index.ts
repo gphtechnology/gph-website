@@ -1,9 +1,14 @@
 // Supabase Edge Function: create-counselor
 //
-// Called from /admin ("Tambah Konselor Baru") by an authenticated
-// admin. Creates the counselor's login (Supabase Auth), their row in
-// `counselors`, and the `profiles` row linking the two — all three in
-// one call so the admin never needs the SQL Editor for this.
+// Called from /admin by an authenticated admin, in two shapes:
+//   - { name, title, email, password } — brand new counselor: creates
+//     the counselors row too ("Tambah Konselor Baru").
+//   - { counselor_id, email, password } — existing counselor row (e.g.
+//     the 3 seeded in 004_booking_system.sql) that doesn't have a
+//     login yet ("Buat Login" on an existing row).
+// Either way it creates the Supabase Auth login and the profiles row
+// linking it to the counselor, so the admin never needs the SQL
+// Editor for this.
 //
 // Deployed with default JWT verification on (do NOT deploy with
 // --no-verify-jwt). On top of that, this function checks the caller's
@@ -60,9 +65,39 @@ Deno.serve(async (req) => {
       return json({ error: "Forbidden: admin only" }, 403);
     }
 
-    const { name, title, email, password } = await req.json();
-    if (!name || !title || !email || !password) {
-      return json({ error: "name, title, email, and password are required" }, 400);
+    const { name, title, email, password, counselor_id } = await req.json();
+    if (!email || !password) {
+      return json({ error: "email and password are required" }, 400);
+    }
+
+    let counselor;
+    let createdNewCounselor = false;
+
+    if (counselor_id) {
+      const { data: existing, error: fetchError } = await admin
+        .from("counselors")
+        .select()
+        .eq("id", counselor_id)
+        .single();
+      if (fetchError || !existing) {
+        return json({ error: "Counselor not found" }, 404);
+      }
+      counselor = existing;
+    } else {
+      if (!name || !title) {
+        return json(
+          { error: "name and title are required for a new counselor" },
+          400,
+        );
+      }
+      const { data: created, error: counselorError } = await admin
+        .from("counselors")
+        .insert({ name, title })
+        .select()
+        .single();
+      if (counselorError) return json({ error: counselorError.message }, 500);
+      counselor = created;
+      createdNewCounselor = true;
     }
 
     const { data: newUser, error: createUserError } =
@@ -72,21 +107,13 @@ Deno.serve(async (req) => {
         email_confirm: true,
       });
     if (createUserError || !newUser.user) {
+      if (createdNewCounselor) {
+        await admin.from("counselors").delete().eq("id", counselor.id);
+      }
       return json(
         { error: createUserError?.message ?? "Failed to create login" },
         500,
       );
-    }
-
-    const { data: counselor, error: counselorError } = await admin
-      .from("counselors")
-      .insert({ name, title })
-      .select()
-      .single();
-
-    if (counselorError) {
-      await admin.auth.admin.deleteUser(newUser.user.id);
-      return json({ error: counselorError.message }, 500);
     }
 
     const { error: profileError } = await admin.from("profiles").insert({
@@ -97,7 +124,9 @@ Deno.serve(async (req) => {
 
     if (profileError) {
       await admin.auth.admin.deleteUser(newUser.user.id);
-      await admin.from("counselors").delete().eq("id", counselor.id);
+      if (createdNewCounselor) {
+        await admin.from("counselors").delete().eq("id", counselor.id);
+      }
       return json({ error: profileError.message }, 500);
     }
 

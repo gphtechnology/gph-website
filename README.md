@@ -221,14 +221,24 @@ taken.
    insert into public.profiles (id, role) values ('<admin-user-uid>', 'admin');
    ```
    (find the UID under Authentication → Users).
-2. Deploy the `create-counselor` Edge Function the same way as
+2. Run `supabase/006_admin_read_profiles.sql` — lets an admin see
+   which counselors already have a login, so `/admin` knows who still
+   needs one (covers the 3 seed counselors from
+   `004_booking_system.sql`, which have no login yet).
+3. Deploy the `create-counselor` Edge Function the same way as
    `confirm-booking-payment` (dashboard editor or CLI) — same secrets,
    no new ones needed.
-3. From then on, adding a counselor is just the **"Tambah Konselor
-   Baru"** form on `/admin` — it creates their Supabase Auth login,
-   `counselors` row, and `profiles` row in one call, and shows a
-   temporary password to hand them. They log in at `/counselor` and
-   check off which slots they work each weekday.
+4. From then on, `/admin` handles both cases without the SQL Editor:
+   - **New counselor**: the "Tambah Konselor Baru" form creates their
+     `counselors` row, Supabase Auth login, and `profiles` row in one
+     call.
+   - **Existing counselor with no login yet**: their row in the list
+     shows a **"Buat Login"** button — fill in email + password and
+     it links a new login to that existing `counselors` row instead
+     of creating a duplicate.
+   Either way it shows a temporary password to hand the counselor, who
+   logs in at `/counselor` and checks off which slots they work each
+   weekday.
 
    (The old manual path — Authentication → Users → Add user, then a
    matching `profiles` row by hand — still works if you ever need it,
