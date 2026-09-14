@@ -5,12 +5,12 @@
  *   cream #F7F2ED, peach #E8BFAF, blue #70b2cf
  * Logo font is Codec Pro (licensed, not bundled here) — drop the
  * woff2 files into src/assets/fonts and uncomment the @font-face
- * below to switch it on. Until then, headings fall back to
- * Plus Jakarta Sans, a free geometric sans with a similar feel.
+ * below to switch it on. Until then, headings fall back to Exo 2,
+ * the closest free match to Codec Pro's rounded-geometric look.
  */
 @theme {
-  --font-display: "Codec Pro", "Plus Jakarta Sans", "DM Sans", sans-serif;
-  --font-body: "DM Sans", "Plus Jakarta Sans", sans-serif;
+  --font-display: "Codec Pro", "Exo 2", "DM Sans", sans-serif;
+  --font-body: "DM Sans", "Exo 2", sans-serif;
 
   --color-cream: #f7f2ed;
   --color-peach: #e8bfaf;

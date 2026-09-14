@@ -204,8 +204,9 @@ the booking/hold logic — only step 2-3 would become automatic.
 - Fonts: **Codec Pro** for the logo/display headings (licensed —
   add the font files under `src/assets/fonts` and uncomment the
   `@font-face` in `src/index.css` when available), **DM Sans** for
-  body copy. Until Codec Pro is added, headings fall back to **Plus
-  Jakarta Sans** (free, similar geometric feel).
+  body copy. Until Codec Pro is added, headings fall back to **Exo
+  2** — the closest free match found (82% similarity per a font
+  comparison tool) among Google Fonts.
 
 ## Deploying to GitHub Pages
 
