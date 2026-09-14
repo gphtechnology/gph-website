@@ -6,6 +6,7 @@ import { Home } from "./pages/Home";
 import { BookCounseling } from "./pages/BookCounseling";
 import { Events } from "./pages/Events";
 import { Admin } from "./pages/Admin";
+import { Counselor } from "./pages/Counselor";
 
 function ScrollManager() {
   const { pathname, hash } = useLocation();
@@ -35,6 +36,7 @@ function App() {
           <Route path="/book-counseling" element={<BookCounseling />} />
           <Route path="/events" element={<Events />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/counselor" element={<Counselor />} />
         </Routes>
       </main>
       <Footer />

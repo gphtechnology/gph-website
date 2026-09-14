@@ -24,9 +24,17 @@ export type Booking = {
   zoom_join_url: string | null;
 };
 
-// Fixed daily template for now — move to a real per-counselor
-// availability table later if schedules need to differ.
-export const DAILY_SLOT_TIMES = ["10:00", "13:00", "16:00", "19:00"];
+// Fixed daily template — which of these are actually bookable for a
+// given counselor/date comes from their weekly availability (see
+// listOpenSlots), set by the counselor at /counselor.
+export const DAILY_SLOT_TIMES = [
+  "08:00",
+  "10:00",
+  "14:00",
+  "16:00",
+  "18:00",
+  "20:00",
+];
 
 export const HOLD_SECONDS = 90;
 
@@ -51,19 +59,19 @@ export async function listCounselors(): Promise<Counselor[]> {
   return data ?? [];
 }
 
-export async function listTakenSlots(
+/** Slots the counselor has marked available for this date that aren't
+ * already taken/held by someone else. */
+export async function listOpenSlots(
   counselorId: string,
   date: string,
 ): Promise<string[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase.rpc("list_taken_slots", {
+  const { data, error } = await supabase.rpc("list_open_slots", {
     p_counselor_id: counselorId,
     p_date: date,
   });
   if (error) throw error;
-  return (data ?? []).map((row: { slot_datetime: string }) =>
-    row.slot_datetime.slice(11, 16),
-  );
+  return (data ?? []).map((row: { slot_time: string }) => row.slot_time);
 }
 
 export async function requestBookingHold(input: {

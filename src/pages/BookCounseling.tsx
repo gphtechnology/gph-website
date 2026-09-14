@@ -3,12 +3,11 @@ import { Container } from "../components/Container";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
 import { useLanguage } from "../lib/i18n/context";
 import {
-  DAILY_SLOT_TIMES,
   HOLD_SECONDS,
   SESSION_PRICE_IDR,
   getMinBookingDate,
   listCounselors,
-  listTakenSlots,
+  listOpenSlots,
   requestBookingHold,
   markAwaitingConfirmation,
   type Counselor,
@@ -24,7 +23,7 @@ export function BookCounseling() {
   const [counselors, setCounselors] = useState<Counselor[]>([]);
   const [counselorId, setCounselorId] = useState("");
   const [date, setDate] = useState(getMinBookingDate());
-  const [takenSlots, setTakenSlots] = useState<string[]>([]);
+  const [openSlots, setOpenSlots] = useState<string[]>([]);
   const [time, setTime] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -47,9 +46,9 @@ export function BookCounseling() {
   useEffect(() => {
     if (!counselorId || !date) return;
     setTime(null);
-    listTakenSlots(counselorId, date)
-      .then(setTakenSlots)
-      .catch(() => setTakenSlots([]));
+    listOpenSlots(counselorId, date)
+      .then(setOpenSlots)
+      .catch(() => setOpenSlots([]));
   }, [counselorId, date]);
 
   useEffect(() => {
@@ -87,7 +86,7 @@ export function BookCounseling() {
       const message = err instanceof Error ? err.message : "";
       if (message.includes("slot_taken")) {
         setError(t.bookCounseling.errorSlotTaken);
-        listTakenSlots(counselorId, date).then(setTakenSlots);
+        listOpenSlots(counselorId, date).then(setOpenSlots);
         setTime(null);
       } else if (message.includes("h1_only")) {
         setError(t.bookCounseling.errorH1Only);
@@ -120,7 +119,7 @@ export function BookCounseling() {
     setBooking(null);
     setTime(null);
     setError(null);
-    listTakenSlots(counselorId, date).then(setTakenSlots);
+    listOpenSlots(counselorId, date).then(setOpenSlots);
   }
 
   if (!isSupabaseConfigured) {
@@ -179,26 +178,26 @@ export function BookCounseling() {
                 {t.bookCounseling.labelTime}
               </label>
               <div className="mt-2 flex flex-wrap gap-2">
-                {DAILY_SLOT_TIMES.map((slot) => {
-                  const taken = takenSlots.includes(slot);
-                  return (
+                {openSlots.length === 0 ? (
+                  <p className="text-sm text-ink/50">
+                    {t.bookCounseling.noSlotsAvailable}
+                  </p>
+                ) : (
+                  openSlots.map((slot) => (
                     <button
                       key={slot}
                       type="button"
-                      disabled={taken}
                       onClick={() => setTime(slot)}
                       className={`rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
-                        taken
-                          ? "cursor-not-allowed border-ink/10 text-ink/30 line-through"
-                          : time === slot
-                            ? "border-blue bg-blue text-white"
-                            : "border-ink/15 text-ink/80 hover:border-blue"
+                        time === slot
+                          ? "border-blue bg-blue text-white"
+                          : "border-ink/15 text-ink/80 hover:border-blue"
                       }`}
                     >
                       {slot}
                     </button>
-                  );
-                })}
+                  ))
+                )}
               </div>
             </div>
 

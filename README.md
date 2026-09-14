@@ -197,6 +197,37 @@ the booking/hold logic — only step 2-3 would become automatic.
      unsecured (a screenshot, a chat, etc.), regenerate them before
      going live** — treat a shared secret as compromised.
 
+### Counselor availability (`/counselor`)
+
+Each counselor logs in separately from `/admin` to set which weekday +
+time slots (from the fixed `DAILY_SLOT_TIMES` template — currently
+08:00, 10:00, 14:00, 16:00, 18:00, 20:00) they're available for. The
+booking page only ever shows a customer slots the counselor has
+actually turned on for that weekday, checked against what's already
+taken.
+
+1. Run `supabase/005_counselor_availability.sql` — adds `profiles`
+   (role + counselor link), `counselor_availability`, and the
+   `list_open_slots()` function the booking page reads from.
+   **This also tightens `events`/`bookings` RLS to admin-only** — a
+   necessary change now that counselor accounts share the same
+   Supabase Auth pool as admins (previously "logged in" and "admin"
+   were the same thing).
+2. For each counselor:
+   - Create their login under **Authentication → Users → Add user**
+     (check "Auto Confirm User"), same as an admin account.
+   - Insert a row in the `profiles` table (Table Editor) with `id` =
+     that user's UID (copy it from the Users list), `role` =
+     `counselor`, and `counselor_id` = their row in the `counselors`
+     table.
+3. The counselor logs in at `/counselor` and checks off which slots
+   they work each weekday — no code change or redeploy needed after
+   that.
+
+Admin accounts need a `profiles` row too now (`role` = `admin`,
+`counselor_id` left null) — without one, `is_admin()` returns false
+and they'll lose access to managing events/bookings.
+
 ## Brand reference
 
 - Colors: cream `#F7F2ED`, peach `#E8BFAF`, blue `#70b2cf` (defined as

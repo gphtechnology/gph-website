@@ -98,6 +98,7 @@ export const en: typeof id = {
     labelCounselor: "Counselor",
     labelDate: "Date",
     labelTime: "Time (WIB)",
+    noSlotsAvailable: "This counselor has no open slots on this date. Try another date.",
     labelName: "Name",
     labelEmail: "Email",
     emailHint:

@@ -96,6 +96,7 @@ export const id = {
     labelCounselor: "Konselor",
     labelDate: "Tanggal",
     labelTime: "Jam (WIB)",
+    noSlotsAvailable: "Konselor ini belum tersedia di tanggal ini. Coba tanggal lain.",
     labelName: "Nama",
     labelEmail: "Email",
     emailHint:
