@@ -47,7 +47,7 @@ export function Footer() {
           <h3 className="font-semibold text-cream">{t.footer.connect}</h3>
           <div className="flex gap-4">
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/gigajopsychologicalhouse/"
               target="_blank"
               rel="noreferrer"
               aria-label="Instagram GPH"
